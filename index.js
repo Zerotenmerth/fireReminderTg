@@ -28,6 +28,7 @@ const gameData =[];
 
 async function startGame(chatId, startMsg, delay=60000)
 {
+    console.log('Game already started');
       const {choosenLang, hiddenLang}= gameSet.selectStyle();
       const {words, selectedWord} = await gameSet.fillWords();
       const Msg = await bot.sendMessage(chatId, startMsg + selectedWord[`${choosenLang}_sense`] + ` [${Random(1,100)}]`, 
@@ -133,10 +134,10 @@ bot.on('callback_query', async msg =>{
   }
 })
 
-startJob('10 00 11-23/3 * * *', ()=>{
+startJob('10 00 09-21/3 * * *', ()=>{
   startGame(mainChatId, notiObj.everyThreeHour, 3000000);
 });
-startJob('10 06 11-23/3 * * *', ()=>{
+startJob('10 06 09-21/3 * * *', ()=>{
     startGame(mainChatId, notiObj.everyThreeHour, 3000000);
 });
 
