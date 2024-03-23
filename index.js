@@ -28,7 +28,6 @@ const gameData =[];
 
 async function startGame(chatId, startMsg, delay=60000)
 {
-    console.log('Game already started');
       const {choosenLang, hiddenLang}= gameSet.selectStyle();
       const {words, selectedWord} = await gameSet.fillWords();
       const Msg = await bot.sendMessage(chatId, startMsg + selectedWord[`${choosenLang}_sense`] + ` [${Random(1,100)}]`, 
@@ -52,7 +51,7 @@ async function endGame(ourQuiz, chatId)
   gameData.splice(gameData.indexOf(ourQuiz), 1);
 
   //Remove Messages
-  control.deleteMsg(bot, chatId, ourQuiz.relatedPosts, 60000);
+  control.deleteMsg(bot, chatId, ourQuiz.relatedPosts, 180000);
 }
 
 bot.on('message', async (msg)=>
@@ -134,11 +133,8 @@ bot.on('callback_query', async msg =>{
   }
 })
 
-startJob('10 00 09-21/3 * * *', ()=>{
-  startGame(mainChatId, notiObj.everyThreeHour, 3000000);
-});
-startJob('10 06 09-21/3 * * *', ()=>{
-    startGame(mainChatId, notiObj.everyThreeHour, 3000000);
+startJob('10 00 11-23/1 * * *', ()=>{
+  startGame(mainChatId, notiObj.everyThreeHour, 1800000);
 });
 
 startJob('0 0 09 * * 1', ()=>{
