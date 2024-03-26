@@ -54,7 +54,7 @@ async function endGame(ourQuiz, chatId)
   control.deleteMsg(bot, chatId, ourQuiz.relatedPosts, 180000);
 }
 
-bot.on('message', async (msg)=>
+bot.on('text', async (msg)=>
 {
     const chatId = msg.chat.id;
     const text = msg.text;

@@ -8,9 +8,9 @@ export class GameSet{
 
     #changeLanguage()
     {
-        const temp = this.choosenLang;
-        this.choosenLang = this.hiddenLang;
-        this.hiddenLang = temp;
+        const temp = this.#choosenLang;
+        this.#choosenLang = this.#hiddenLang;
+        this.#hiddenLang = temp;
     }
     selectStyle()
     {
