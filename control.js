@@ -20,7 +20,8 @@ export class Control
         return {
           reply_markup: JSON.stringify({
             inline_keyboard: arr
-          })
+          }),
+          parse_mode: 'HTML'
         }
       }
 }

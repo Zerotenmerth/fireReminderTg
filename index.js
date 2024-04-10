@@ -21,7 +21,8 @@ const mainChatId = JSON.parse(fs.readFileSync('./data/config.json', 'utf8')).cha
 
 bot.setMyCommands([
   {command: '/start', description: notiObj.start},
-  {command: '/info', description: notiObj.info}
+  {command: '/info', description: notiObj.info},
+  {command: '/stat', description: notiObj.stat}
 ])
 
 const gameData =[];
@@ -34,7 +35,7 @@ async function startGame(chatId, startMsg, delay=60000)
       control.createGameOptions(control.createGameArrForOptions(words, hiddenLang)));
       
       gameData.push({selectedWord, 
-        messageId: Msg.message_id, 
+        messageId : Msg.message_id,
         countOfClick: 0, alreadyUpPriority: false,
         answers:[], relatedPosts: [Msg.message_id]});
 
@@ -45,21 +46,23 @@ async function startGame(chatId, startMsg, delay=60000)
 async function endGame(ourQuiz, chatId)
 {
   let messaguage = ChooseEndMsg(ourQuiz.answers);
-  const resultMsg = await bot.sendMessage(chatId, messaguage, control.createGameOptions([[{text: notiObj.repeat, callback_data: 'repeat'}]]));
-  ourQuiz.relatedPosts.push(resultMsg.message_id);
-  
-  gameData.splice(gameData.indexOf(ourQuiz), 1);
 
   //Remove Messages
-  control.deleteMsg(bot, chatId, ourQuiz.relatedPosts, 180000);
+  control.deleteMsg(bot, chatId, ourQuiz.relatedPosts, 1000);
+  
+  const resultMsg = await bot.sendMessage(chatId, `<pre>${ourQuiz.selectedWord.eng_sense}</pre> ${messaguage}`, control.createGameOptions([[{text: notiObj.repeat, callback_data: 'repeat'}]]));
+  gameData.splice(gameData.indexOf(ourQuiz), 1);
+  
+  control.deleteMsg(bot, chatId, [resultMsg.message_id], 180000);
 }
 
 bot.on('text', async (msg)=>
 {
     const chatId = msg.chat.id;
     const text = msg.text;
+    const username = msg.from.username;
 
-    if(text.startsWith('/add'))
+    if(text.startsWith('/add') && chatId == mainChatId)
     { 
       try{
        let textData = text.substring(5).split(' | ');
@@ -77,9 +80,20 @@ bot.on('text', async (msg)=>
       }
     }
 
-    if(text.startsWith('/start'))
+    if(text.startsWith('/start') && chatId == mainChatId)
     {
       startGame(chatId, notiObj.game_start[Random(0, notiObj.game_start.length-1)]);
+    }
+
+    if(text.startsWith('/stat') && chatId == mainChatId)
+    {
+      const statData = await fireMethods.findOneItemByKey('EngStat', username);
+
+      let templateMsg =`<blockquote><code>Personal @${username} stat</code>\nВсего ответов - <code>${statData.all_count}</code>\nВерных ответов - <code>${statData.win_count}</code>\nНеверных ответов - <code>${statData.lose_count}</code></blockquote>`;
+          
+          const statMsg = await bot.sendMessage(mainChatId, 
+          templateMsg, control.createGameOptions([]));
+        control.deleteMsg(bot, mainChatId, [statMsg], 1800000);
     }
   
 });
@@ -100,6 +114,8 @@ bot.on('callback_query', async msg =>{
         const userObj={username, correctAnswer: false};
         if(!ourQuiz.answers.find(x=>x.username == userObj.username))
         {
+          const statData = await fireMethods.findOneItemByKey('EngStat', username);
+          statData.all_count++;
           if(pickedByUserWord == ourQuiz.selectedWord.eng_sense)
           {
             if(!ourQuiz.alreadyUpPriority){
@@ -108,7 +124,14 @@ bot.on('callback_query', async msg =>{
               ourQuiz.alreadyUpPriority = true;
             }
             userObj.correctAnswer= true;
+            
+            statData.daily_count++;
+            statData.win_count++;
           }
+          else
+            statData.lose_count++;
+
+          fireMethods.updateRecordInTable('EngStat', username, statData);
 
           ourQuiz.answers.push(userObj)
         
@@ -134,10 +157,26 @@ bot.on('callback_query', async msg =>{
 })
 
 startJob('10 00 11-23/1 * * *', ()=>{
-  startGame(mainChatId, notiObj.everyThreeHour, 1800000);
+  startGame(mainChatId, notiObj.everyHour, 1800000);
 });
 
 startJob('0 0 09 * * 1', ()=>{
   fireMethods.updateAllRecords('EngWords');
+});
+
+startJob('0 55 23 * * *', async ()=>{
+  const dailyData = await fireMethods.readDataFromTable('EngStat');
+
+  let templateMsg =`<pre>Daily Statistics</pre>`;
+    dailyData.forEach(x=>{
+      templateMsg+=`@${x.username} за день набрал(а) - <code>${x.daily_count}</code> верных ответов\n`
+    });
+
+  const dailyMsg = await bot.sendMessage(mainChatId, 
+    templateMsg, control.createGameOptions([]));
+    control.deleteMsg(bot, mainChatId, [dailyMsg], 1800000);
+
+  fireMethods.updateRecordInTable('EngStat', 'Risu_21', {daily_count: 0});
+  fireMethods.updateRecordInTable('EngStat', 'Zerotenmerth', {daily_count: 0});
 });
 

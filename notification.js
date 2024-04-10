@@ -2,10 +2,11 @@ import { Random } from "./features.js";
 export const notiObj =
 {
     game_start: ['Загаданное слово - ', 'Напомни слово - '],
-    everyThreeHour: 'Закрепление слова - ',
+    everyHour: 'Закрепление слова - ',
     add: 'Новое слово добавлено!',
     error: 'Неверно набрана команда!',
     start: 'Запустить повторение слов',
+    stat: 'Показать статистику ответов',
     info: 'Вся информация о боте',
     repeat: 'Еще один раунд!',
     alreadyAnswered: 'Вы уже ответили!',
