@@ -9,6 +9,13 @@ export class Control
             arr.forEach(x=> bot.deleteMessage(chatId, x));
         });
     }
+    deleteQuizFromArray(gameData, ourQuiz, delay)
+    {
+      const date = new Date();
+      return startJob(new Date(date.getTime()  + delay), ()=>{
+        gameData.splice(gameData.indexOf(ourQuiz), 1);
+      });
+    }
     createGameArrForOptions(arr, lang)
     {
         return[

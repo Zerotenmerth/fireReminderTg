@@ -51,9 +51,10 @@ async function endGame(ourQuiz, chatId)
   control.deleteMsg(bot, chatId, ourQuiz.relatedPosts, 1000);
   
   const resultMsg = await bot.sendMessage(chatId, `<pre>${ourQuiz.selectedWord.eng_sense}</pre> ${messaguage}`, control.createGameOptions([[{text: notiObj.know, callback_data: '^know'}, {text: notiObj.good_know, callback_data: '^good_know'}],[{text: notiObj.repeat, callback_data: '^new_game'}]]));
-  gameData.splice(gameData.indexOf(ourQuiz), 1);
+  ourQuiz.messageId = resultMsg.message_id;
   
   control.deleteMsg(bot, chatId, [resultMsg.message_id], 180000);
+  control.deleteQuizFromArray(gameData, ourQuiz, 180000);
 }
 
 function updatePriority(ourQuiz, value)
@@ -118,11 +119,11 @@ bot.on('callback_query', async msg =>{
     break;
     
     case '^know':
-      updatePriority(ourQuiz, 5);
+      updatePriority(ourQuiz, 3);
     break;
 
     case '^good_know':
-      updatePriority(ourQuiz, 10);
+      updatePriority(ourQuiz, 6);
     break;
 
     default:
