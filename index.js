@@ -31,7 +31,7 @@ async function startGame(chatId, startMsg, delay=60000)
 {
       const {choosenLang, hiddenLang}= gameSet.selectStyle();
       const {words, selectedWord} = await gameSet.fillWords();
-      const Msg = await bot.sendMessage(chatId, startMsg + selectedWord[`${choosenLang}_sense`] + ` [${Random(1,100)}]`, 
+      const Msg = await bot.sendMessage(chatId, startMsg + selectedWord[`${choosenLang}_sense`], 
       control.createGameOptions(control.createGameArrForOptions(words, hiddenLang)));
       
       gameData.push({selectedWord, 
@@ -50,10 +50,16 @@ async function endGame(ourQuiz, chatId)
   //Remove Messages
   control.deleteMsg(bot, chatId, ourQuiz.relatedPosts, 1000);
   
-  const resultMsg = await bot.sendMessage(chatId, `<pre>${ourQuiz.selectedWord.eng_sense}</pre> ${messaguage}`, control.createGameOptions([[{text: notiObj.repeat, callback_data: 'repeat'}]]));
+  const resultMsg = await bot.sendMessage(chatId, `<pre>${ourQuiz.selectedWord.eng_sense}</pre> ${messaguage}`, control.createGameOptions([[{text: notiObj.know, callback_data: '^know'}, {text: notiObj.good_know, callback_data: '^good_know'}],[{text: notiObj.repeat, callback_data: '^new_game'}]]));
   gameData.splice(gameData.indexOf(ourQuiz), 1);
   
   control.deleteMsg(bot, chatId, [resultMsg.message_id], 180000);
+}
+
+function updatePriority(ourQuiz, value)
+{
+  ourQuiz.selectedWord.priority=ourQuiz.selectedWord.priority + value;
+  fireMethods.updateRecordInTable('EngWords', ourQuiz.selectedWord.eng_sense, ourQuiz.selectedWord);
 }
 
 bot.on('text', async (msg)=>
@@ -104,13 +110,22 @@ bot.on('callback_query', async msg =>{
   const chatId = msg.message.chat.id;
   const username = msg.from.username;
   const msgId = msg.message.message_id;
+  const ourQuiz = gameData.find(x=>x.messageId == msgId);
 
-  if(pickedByUserWord =='repeat')
-    startGame(chatId, notiObj.game_start[Random(0, notiObj.game_start.length-1)]);
-  else {
-      try{
-        const ourQuiz = gameData.find(x=>x.messageId == msgId);
+  switch (pickedByUserWord) {
+    case '^new_game':
+      startGame(chatId, notiObj.game_start[Random(0, notiObj.game_start.length-1)]);
+    break;
+    
+    case '^know':
+      updatePriority(ourQuiz, 5);
+    break;
 
+    case '^good_know':
+      updatePriority(ourQuiz, 10);
+    break;
+
+    default:
         const userObj={username, correctAnswer: false};
         if(!ourQuiz.answers.find(x=>x.username == userObj.username))
         {
@@ -152,7 +167,7 @@ bot.on('callback_query', async msg =>{
           const repeatMsg = await bot.sendMessage(chatId, notiObj.alreadyAnswered);
           ourQuiz.relatedPosts.push(repeatMsg.message_id);
         }
-      }catch(e){console.log(e);}
+      break;
   }
 })
 
